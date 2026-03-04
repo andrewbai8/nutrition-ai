@@ -3,15 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Nutrition AI</title>
 </head>
 <body>
-    <script src="script.js"></script>
+  
     <div class="search-container">
   <h1>Track Your Nutrition</h1>
+
   <input type="text" id="foodInput" placeholder="Ex: Chicken breast, 100g">
   <button id="searchBtn">Search & Analyze</button>
   <div id="display" class="result-area"></div>
+
+  <div id="macroModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <span id="closeBtn">&times;</span>
+    <h2>Nutrition Facts</h2>
+    <div id="macroResults"></div>
+  </div>
 </div>
+</div>
+<script src="script.js"></script>
 </body>
 </html>

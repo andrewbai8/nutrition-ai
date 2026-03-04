@@ -1,40 +1,45 @@
-const usdaKey = process.env.usdaKey;
-const openAIKey = process.env.openAIKey;
-fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${usdaKey}&query=apple`)
-  .then(response => response.json())
-  .then(usdaData => {
-    console.log("USDA Data:", usdaData.foods);
+const usdaKey = ;
+const geminiKey = ; // replace open ai with gemini
+// -> replaced open ai with gemini 
+document.getElementById('searchBtn').addEventListener('click', () => {
+  const query = document.getElementById('foodInput').value;
 
-    return fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openAIKey}`
-      },
-      body: JSON.stringify({
-        model: "gpt-4o",
-        messages: [{ role: "user", content: `Analyze this nutrition data for an apple: ${JSON.stringify(usdaData.foods)}` }]
-      })
-    });
-  })
-  .then(res => res.json())
-  .then(aiData => console.log("AI Insights:", aiData.choices.message.content))
-  .catch(err => console.error("Error:", err));
-// AI USDA KEY
-// Macros 
-const topFood = data.foods; // Get the most relevant match
+  fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${usdaKey}&query=${query}`)
+    .then(res => res.json())
+    .then(usdaData => {
+      const topFood = usdaData.foods[0]; // 
+      if (!topFood) throw new Error("No foods found");
+// creating the variable to get the nutrients facts
+      const getNutrient = (name) => {
+        const n = topFood.foodNutrients.find(nut => nut.nutrientName.includes(name));
+        return n ? `${n.value}${n.unitName}` : 'N/A';
+      };
+// this is getting the macros
+      const macros = {
+        calories: getNutrient('Energy'),
+        protein: getNutrient('Protein'),
+        fat: getNutrient('Total lipid'),
+        carbs: getNutrient('Carbohydrate')
+      };
+// getting the results from the macros
+      const resultsDiv = document.getElementById('macroResults');
+      resultsDiv.innerHTML = `<h3>${topFood.description}</h3>
+       <p>Calories: ${macros.calories}</p>
+       <p>Protein: ${macros.protein}</p>`;
+      document.getElementById('macroModal').style.display = 'block';
 
-// Helper function to find specific nutrients by name
-const getNutrient = (name) => {
-  const nutrient = topFood.foodNutrients.find(n => n.nutrientName.includes(name));
-  return nutrient ? `${nutrient.value} ${nutrient.unitName}` : 'N/A';
-};
-
-const macros = {
-  calories: getNutrient('Energy'),
-  protein: getNutrient('Protein'),
-  fat: getNutrient('Total lipid'),
-  carbs: getNutrient('Carbohydrate')
-};
-
-console.log("Extracted Macros:", macros);
+      return fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: `Analyze these macros: ${JSON.stringify(macros)}` }] }]
+        })
+      });
+    })
+    .then(res => res.json())
+    .then(aiData => {
+      const insight = aiData.candidates[0].content.parts[0].text; 
+      document.getElementById('macroResults').innerHTML += `<p><strong>AI Insight:</strong> ${insight}</p>`;
+    })
+    .catch(err => console.error("Error:", err));
+}); 
